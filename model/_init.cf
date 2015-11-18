@@ -40,12 +40,13 @@ entity Form:
         Fields that start with an existing field name and than __ are used to specify field
         specific options:
 
-        __widget: Specify a special widget for this field. Currently only textarea and options is
-                  supported.
+        __widget: Specify a special widget for this field. textarea, options and slider are supported.
         __options: A list of options that should be chosen from. The list is provided as a comma
                    separated string.
         __label: A label for the form field
         __help: A help text for the form field
+        __min: Option for the slider widget
+        __max: Option for the slider widget
     """
 end
 
