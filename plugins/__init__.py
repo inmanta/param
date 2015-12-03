@@ -140,3 +140,17 @@ def one(name: "string", entity: "any") -> "any":
         metadata={"type": "form", "record_id": result.result["record"]["record_id"]}
         unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
         return Unknown(source=name)
+
+
+@plugin
+def report(name: "string", value: "string"):
+    """
+        Set a param on the server
+    """
+    env = Config.get("config", "environment", None)
+
+    if env is None:
+        raise Exception("The environment of this model should be configured in config>environment")
+
+    result = get_client().set_param(tid=env, id=name, value=value, source="report",
+                                    metadata={"type": "report"})
