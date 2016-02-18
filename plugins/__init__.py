@@ -115,13 +115,14 @@ def one(name: "string", entity: "any") -> "any":
     if "record_count" not in type_map["options"] or type_map["options"]["record_count"] != 1:
         raise Exception("one plugin can only be used on forms for which only one instance can exist.")
     
+   
     get_client().put_form(tid=env, id=type_map["type"], form=type_map)
     
     result = get_client().list_records(tid=env, form_type=type_map["type"])
     
-    if result.result == 500:
-        raise Exception(result.result["message"])
-    
+    if result.code == 500:
+        raise Exception(result.result)
+
     if len(result.result["records"]) == 0:
         metadata={"type": "form", "form": type_map["type"]}
         unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
