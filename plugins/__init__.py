@@ -42,20 +42,20 @@ def type_to_map(type_class):
         obj = re.search("(.*)__(.*)", name)
         if name[0] == "_" and name in defaults and defaults[name] is not None:
             type_map["options"][name[1:]] = defaults[name]
-            
+
         elif obj:
             attr, opt = obj.groups()
             attribute_options[attr][opt] = defaults[name]
-            
+
         else:
             type_map["attributes"][name] = {"type": attr.type.__str__()}
             if name in defaults and defaults[name] is not None:
                 type_map["attributes"][name]["default"] = defaults[name]
-    
+
     for attr in attribute_options.keys():
         if attr in type_map["attributes"]:
             type_map["attributes"][attr]["options"] = attribute_options[attr]
-        
+
     return type_map
 
 @plugin
@@ -70,7 +70,7 @@ def get(name: "string", instance: "string"="") -> "any":
 
     record_id = uuid.UUID(instance)
     result = get_client().get_record(tid=env, id=record_id)
-    
+
     if result.code == 200:
         fields = result.result["record"]["fields"]
         if name in fields:
@@ -84,7 +84,7 @@ def get(name: "string", instance: "string"="") -> "any":
 def instances(instance_type: "any", expecting: "number"=0) -> "list":
     """
         Return a list of instances of the given type
-        
+
         :param instance_type The entity to base the form on
         :param expecting The minimal number of parameters to expect
     """
@@ -95,9 +95,9 @@ def instances(instance_type: "any", expecting: "number"=0) -> "list":
 
     type_map = type_to_map(instance_type)
     get_client().put_form(tid=env, id=type_map["type"], form=type_map)
-    
+
     result = get_client().list_records(tid=env, form_type=type_map["type"])
-    
+
     return [x["record_id"] for x in result.result["records"]]
 
 @plugin
@@ -111,19 +111,19 @@ def one(name: "string", entity: "any") -> "any":
         raise Exception("The environment of this model should be configured in config>environment")
 
     type_map = type_to_map(entity)
-    
+
     if "record_count" not in type_map["options"] or type_map["options"]["record_count"] != 1:
         raise Exception("one plugin can only be used on forms for which only one instance can exist.")
-    
-   
+
+
     get_client().put_form(tid=env, id=type_map["type"], form=type_map)
-    
+
     result = get_client().list_records(tid=env, form_type=type_map["type"])
-    
+
     if result.code == 500:
         raise Exception(result.result)
 
-    if len(result.result["records"]) == 0:
+    if result.code == 404 or len(result.result["records"]) == 0:
         metadata={"type": "form", "form": type_map["type"]}
         unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
         return Unknown(source=name)
@@ -131,13 +131,13 @@ def one(name: "string", entity: "any") -> "any":
     elif len(result.result["records"]) > 1:
         raise Exception("Only one record for form %s may exist, %d were returned." %
                         (type_map["type"], len(result.result["records"])))
-        
+
     else:
         result = get_client().get_record(tid=env, id=result.result["records"][0]["record_id"])
-        
+
         if name in result.result["record"]["fields"]:
             return result.result["record"]["fields"][name]
-        
+
         metadata={"type": "form", "record_id": result.result["record"]["record_id"]}
         unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
         return Unknown(source=name)
