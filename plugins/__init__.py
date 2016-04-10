@@ -24,12 +24,8 @@ from impera import protocol
 from impera.config import Config
 from impera.plugins.base import plugin, Context, PluginMeta
 from impera.execute.util import Unknown
-from impera.export import Exporter, Offline, unknown_parameters
+from impera.export import Exporter, unknown_parameters
 
-
-def get_client():
-    client = protocol.Client("compiler", "client")
-    return client
 
 def type_to_map(type_class):
     cls = type_class._get_instance()
@@ -59,7 +55,7 @@ def type_to_map(type_class):
     return type_map
 
 @plugin
-def get(name: "string", instance: "string"="") -> "any":
+def get(context: Context, name: "string", instance: "string"="") -> "any":
     """
         Get a parameter from the server
     """
@@ -69,7 +65,10 @@ def get(name: "string", instance: "string"="") -> "any":
         raise Exception("The environment of this model should be configured in config>environment")
 
     record_id = uuid.UUID(instance)
-    result = get_client().get_record(tid=env, id=record_id)
+    def call():
+        return context.get_client().get_record(tid=env, id=record_id)
+    
+    result = context.run_sync(call)
 
     if result.code == 200:
         fields = result.result["record"]["fields"]
@@ -81,7 +80,7 @@ def get(name: "string", instance: "string"="") -> "any":
     return Unknown(source=name)
 
 @plugin
-def instances(instance_type: "any", expecting: "number"=0) -> "list":
+def instances(context: Context, instance_type: "any", expecting: "number"=0) -> "list":
     """
         Return a list of instances of the given type
 
@@ -94,14 +93,18 @@ def instances(instance_type: "any", expecting: "number"=0) -> "list":
         raise Exception("The environment of this model should be configured in config>environment")
 
     type_map = type_to_map(instance_type)
-    get_client().put_form(tid=env, id=type_map["type"], form=type_map)
+    def put_call():
+        return context.get_client().put_form(tid=env, id=type_map["type"], form=type_map)
+    context.run_sync(put_call)
 
-    result = get_client().list_records(tid=env, form_type=type_map["type"])
+    def list_call():
+        return context.get_client().list_records(tid=env, form_type=type_map["type"])
+    result = context.run_sync(list_call)
 
     return [x["record_id"] for x in result.result["records"]]
 
 @plugin
-def one(name: "string", entity: "any") -> "any":
+def one(context: Context, name: "string", entity: "any") -> "any":
     """
         Get a parameter from a form that can have only one instance.
     """
@@ -115,10 +118,13 @@ def one(name: "string", entity: "any") -> "any":
     if "record_count" not in type_map["options"] or type_map["options"]["record_count"] != 1:
         raise Exception("one plugin can only be used on forms for which only one instance can exist.")
 
+    def put_call():
+        return context.get_client().put_form(tid=env, id=type_map["type"], form=type_map)
+    context.run_sync(put_call)
 
-    get_client().put_form(tid=env, id=type_map["type"], form=type_map)
-
-    result = get_client().list_records(tid=env, form_type=type_map["type"])
+    def list_call():
+        return context.get_client().list_records(tid=env, form_type=type_map["type"])
+    result = context.run_sync(list_call)
 
     if result.code == 500:
         raise Exception(result.result)
@@ -133,7 +139,9 @@ def one(name: "string", entity: "any") -> "any":
                         (type_map["type"], len(result.result["records"])))
 
     else:
-        result = get_client().get_record(tid=env, id=result.result["records"][0]["record_id"])
+        def get_call():
+            return get_client().get_record(tid=env, id=result.result["records"][0]["record_id"])
+        result = context.run_sync(get_call)
 
         if name in result.result["record"]["fields"]:
             return result.result["record"]["fields"][name]
@@ -144,7 +152,7 @@ def one(name: "string", entity: "any") -> "any":
 
 
 @plugin
-def report(name: "string", value: "string"):
+def report(context: Context, name: "string", value: "string"):
     """
         Set a param on the server
     """
@@ -153,5 +161,7 @@ def report(name: "string", value: "string"):
     if env is None:
         raise Exception("The environment of this model should be configured in config>environment")
 
-    result = get_client().set_param(tid=env, id=name, value=value, source="report",
-                                    metadata={"type": "report"})
+    def report_call():
+        return get_client().set_param(tid=env, id=name, value=value, source="report",
+                                      metadata={"type": "report"})
+    return self.rync_sync(report_call)
