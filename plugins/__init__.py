@@ -27,6 +27,9 @@ from impera.execute.util import Unknown
 from impera.export import Exporter, unknown_parameters
 
 
+RECORD_CACHE= {}
+
+
 def type_to_map(type_class):
     cls = type_class._get_instance()
 
@@ -63,21 +66,29 @@ def get(context: Context, name: "string", instance: "string"="") -> "any":
 
     if env is None:
         raise Exception("The environment of this model should be configured in config>environment")
-
-    record_id = uuid.UUID(instance)
-    def call():
-        return context.get_client().get_record(tid=env, id=record_id)
     
-    result = context.run_sync(call)
-
-    if result.code == 200:
-        fields = result.result["record"]["fields"]
-        if name in fields:
-            return fields[name]
-
-    metadata={"type": "form", "record_id": instance}
-    unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
-    return Unknown(source=name)
+    if instance not in RECORD_CACHE:
+        record_id = uuid.UUID(instance)
+        def call():
+            return context.get_client().get_record(tid=env, id=record_id)
+        
+        result = context.run_sync(call)
+    
+        if result.code == 200:
+            RECORD_CACHE[instance] = result.result["record"]["fields"]
+        else:
+            metadata={"type": "form", "record_id": instance}
+            unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
+            return Unknown(source=name)
+    
+    fields = RECORD_CACHE[instance]
+    if name in fields:
+        return fields[name]
+    else:
+        metadata={"type": "form", "record_id": instance}
+        unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
+        return Unknown(source=name)
+    
 
 @plugin
 def instances(context: Context, instance_type: "any", expecting: "number"=0) -> "list":
