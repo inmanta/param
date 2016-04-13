@@ -122,7 +122,7 @@ def one(ctx: Context, name: "string", entity: "any") -> "any":
 
     result = get_client().list_records(tid=env, form_type=type_map["type"])
 
-    if result.code == 500:
+    if result.code != 200:
         raise Exception(result.result)
 
     if result.code == 404 or len(result.result["records"]) == 0:
