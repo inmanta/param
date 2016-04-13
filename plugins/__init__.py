@@ -31,9 +31,8 @@ def get_client():
     client = protocol.Client("compiler", "client")
     return client
 
-def type_to_map(type_class):
-    cls = type_class._get_instance()
 
+def type_to_map(cls):
     type_map = {"type": str(cls), "attributes": {}, "options": {}}
     defaults = cls.get_default_values()
     attribute_options = defaultdict(dict)
@@ -41,22 +40,23 @@ def type_to_map(type_class):
     for name, attr in cls.attributes.items():
         obj = re.search("(.*)__(.*)", name)
         if name[0] == "_" and name in defaults and defaults[name] is not None:
-            type_map["options"][name[1:]] = defaults[name]
+            type_map["options"][name[1:]] = defaults[name].execute(None, None, None)
 
         elif obj:
             attr, opt = obj.groups()
-            attribute_options[attr][opt] = defaults[name]
+            attribute_options[attr][opt] = defaults[name].execute(None, None, None)
 
         else:
             type_map["attributes"][name] = {"type": attr.type.__str__()}
             if name in defaults and defaults[name] is not None:
-                type_map["attributes"][name]["default"] = defaults[name]
+                type_map["attributes"][name]["default"] = defaults[name].execute(None, None, None)
 
     for attr in attribute_options.keys():
         if attr in type_map["attributes"]:
             type_map["attributes"][attr]["options"] = attribute_options[attr]
 
     return type_map
+
 
 @plugin
 def get(name: "string", instance: "string"="") -> "any":
@@ -76,9 +76,10 @@ def get(name: "string", instance: "string"="") -> "any":
         if name in fields:
             return fields[name]
 
-    metadata={"type": "form", "record_id": instance}
+    metadata = {"type": "form", "record_id": instance}
     unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
     return Unknown(source=name)
+
 
 @plugin
 def instances(instance_type: "any", expecting: "number"=0) -> "list":
@@ -100,12 +101,14 @@ def instances(instance_type: "any", expecting: "number"=0) -> "list":
 
     return [x["record_id"] for x in result.result["records"]]
 
+
 @plugin
-def one(name: "string", entity: "any") -> "any":
+def one(ctx: Context, name: "string", entity: "any") -> "any":
     """
         Get a parameter from a form that can have only one instance.
     """
     env = Config.get("config", "environment", None)
+    entity = ctx.get_type(entity)
 
     if env is None:
         raise Exception("The environment of this model should be configured in config>environment")
@@ -115,7 +118,6 @@ def one(name: "string", entity: "any") -> "any":
     if "record_count" not in type_map["options"] or type_map["options"]["record_count"] != 1:
         raise Exception("one plugin can only be used on forms for which only one instance can exist.")
 
-
     get_client().put_form(tid=env, id=type_map["type"], form=type_map)
 
     result = get_client().list_records(tid=env, form_type=type_map["type"])
@@ -124,7 +126,7 @@ def one(name: "string", entity: "any") -> "any":
         raise Exception(result.result)
 
     if result.code == 404 or len(result.result["records"]) == 0:
-        metadata={"type": "form", "form": type_map["type"]}
+        metadata = {"type": "form", "form": type_map["type"]}
         unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
         return Unknown(source=name)
 
@@ -138,7 +140,7 @@ def one(name: "string", entity: "any") -> "any":
         if name in result.result["record"]["fields"]:
             return result.result["record"]["fields"][name]
 
-        metadata={"type": "form", "record_id": result.result["record"]["record_id"]}
+        metadata = {"type": "form", "record_id": result.result["record"]["record_id"]}
         unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
         return Unknown(source=name)
 
