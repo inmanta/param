@@ -22,7 +22,7 @@ import re
 
 from impera import protocol
 from impera.config import Config
-from impera.plugins.base import plugin, Context, PluginMeta
+from impera.plugins import plugin, Context, PluginMeta
 from impera.execute.util import Unknown
 from impera.export import Exporter, Offline, unknown_parameters
 
