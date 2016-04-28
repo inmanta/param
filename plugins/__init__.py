@@ -90,7 +90,7 @@ def get(context: Context, name: "string", instance: "string"="") -> "any":
 
 
 @plugin
-def instances(context: Context, instance_type: "any", expecting: "number"=0) -> "list":
+def instances(context: Context, instance_type: "string", expecting: "number"=0) -> "list":
     """
         Return a list of instances of the given type
 
@@ -98,6 +98,7 @@ def instances(context: Context, instance_type: "any", expecting: "number"=0) -> 
         :param expecting The minimal number of parameters to expect
     """
     env = Config.get("config", "environment", None)
+    instance_type = context.get_type(instance_type)
 
     if env is None:
         raise Exception("The environment of this model should be configured in config>environment")
@@ -115,12 +116,12 @@ def instances(context: Context, instance_type: "any", expecting: "number"=0) -> 
 
 
 @plugin
-def one(context: Context, name: "string", entity: "any") -> "any":
+def one(context: Context, name: "string", entity: "string") -> "any":
     """
         Get a parameter from a form that can have only one instance.
     """
     env = Config.get("config", "environment", None)
-    entity = ctx.get_type(entity)
+    entity = context.get_type(entity)
 
     if env is None:
         raise Exception("The environment of this model should be configured in config>environment")
