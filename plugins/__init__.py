@@ -153,7 +153,7 @@ def one(context: Context, name: "string", entity: "string") -> "any":
 
     else:
         def get_call():
-            return get_client().get_record(tid=env, id=result.result["records"][0]["record_id"])
+            return context.get_client().get_record(tid=env, id=result.result["records"][0]["record_id"])
         result = context.run_sync(get_call)
 
         if name in result.result["record"]["fields"]:
@@ -175,6 +175,6 @@ def report(context: Context, name: "string", value: "string"):
         raise Exception("The environment of this model should be configured in config>environment")
 
     def report_call():
-        return get_client().set_param(tid=env, id=name, value=value, source="report",
+        return context.get_client().set_param(tid=env, id=name, value=value, source="report",
                                       metadata={"type": "report"})
-    return self.rync_sync(report_call)
+    return context.run_sync(report_call)
