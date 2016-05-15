@@ -112,6 +112,9 @@ def instances(context: Context, instance_type: "string", expecting: "number"=0) 
         return context.get_client().list_records(tid=env, form_type=type_map["type"])
     result = context.run_sync(list_call)
 
+    if result.code != 200:
+        raise Exception("Failed to retrieve instances: " + result.result["message"])
+
     return [x["record_id"] for x in result.result["records"]]
 
 
