@@ -1,5 +1,4 @@
-author: Bart Vanbrabant <bart@impera.io>
+author: Inmanta <code@inmanta.com>
 license: Apache 2.0
 name: param
-source: git@git.impera.io:modules/param
-version: 0.1
+version: '0.2'
