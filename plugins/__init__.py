@@ -1,5 +1,5 @@
 """
-    Copyright 2015 Impera
+    Copyright 2016 Inmanta
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,18 +13,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-    Contact: bart@impera.io
+    Contact: code@inmanta.com
 """
 
 import uuid
 from collections import defaultdict
 import re
 
-from impera import protocol
-from impera.config import Config
-from impera.plugins import plugin, Context, PluginMeta
-from impera.execute.util import Unknown
-from impera.export import Exporter, unknown_parameters
+from inmanta import protocol
+from inmanta.config import Config
+from inmanta.plugins import plugin, Context, PluginMeta
+from inmanta.execute.util import Unknown
+from inmanta.export import Exporter, unknown_parameters
 
 
 RECORD_CACHE= {}
