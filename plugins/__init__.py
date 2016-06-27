@@ -109,13 +109,19 @@ def instances(context: Context, instance_type: "string", expecting: "number"=0) 
     context.run_sync(put_call)
 
     def list_call():
-        return context.get_client().list_records(tid=env, form_type=type_map["type"])
+        return context.get_client().list_records(tid=env, form_type=type_map["type"],
+                                                 include_record=True)
     result = context.run_sync(list_call)
 
     if result.code != 200:
         raise Exception("Failed to retrieve instances: " + result.result["message"])
 
-    return [x["record_id"] for x in result.result["records"]]
+    return_list = []
+    for record in result.result["records"]:
+        return_list.append(record["record_id"])
+        RECORD_CACHE[record["record_id"]] = record["fields"]
+
+    return return_list
 
 
 @plugin
