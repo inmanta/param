@@ -152,9 +152,13 @@ def one(context: Context, name: "string", entity: "string") -> "any":
         raise Exception(result.result)
 
     if result.code == 404 or len(result.result["records"]) == 0:
-        metadata = {"type": "form", "form": type_map["type"]}
-        unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
-        return Unknown(source=name)
+        if name in type_map["attributes"] and "default" in type_map["attributes"][name]:
+            return type_map["attributes"][name]["default"]
+
+        else:
+            metadata = {"type": "form", "form": type_map["type"]}
+            unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
+            return Unknown(source=name)
 
     elif len(result.result["records"]) > 1:
         raise Exception("Only one record for form %s may exist, %d were returned." %
@@ -179,6 +183,9 @@ def report(context: Context, name: "string", value: "string"):
         Set a param on the server
     """
     env = Config.get("config", "environment", None)
+
+    if "inmanta.execute.util.Unknown" in value:
+        return
 
     if env is None:
         raise Exception("The environment of this model should be configured in config>environment")
