@@ -1,5 +1,5 @@
 """
-    Copyright 2016 Inmanta
+    Copyright 2017 Inmanta
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -118,8 +118,8 @@ def instances(context: Context, instance_type: "string", expecting: "number"=0) 
 
     return_list = []
     for record in result.result["records"]:
-        return_list.append(record["record_id"])
-        RECORD_CACHE[record["record_id"]] = record["fields"]
+        return_list.append(record["id"])
+        RECORD_CACHE[record["id"]] = record["fields"]
 
     return return_list
 
@@ -166,13 +166,13 @@ def one(context: Context, name: "string", entity: "string") -> "any":
 
     else:
         def get_call():
-            return context.get_client().get_record(tid=env, id=result.result["records"][0]["record_id"])
+            return context.get_client().get_record(tid=env, id=result.result["records"][0]["id"])
         result = context.run_sync(get_call)
 
         if name in result.result["record"]["fields"]:
             return result.result["record"]["fields"][name]
 
-        metadata = {"type": "form", "record_id": result.result["record"]["record_id"]}
+        metadata = {"type": "form", "record_id": result.result["record"]["id"]}
         unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
         return Unknown(source=name)
 
