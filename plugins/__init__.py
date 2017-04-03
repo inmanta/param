@@ -140,6 +140,9 @@ def one(context: Context, name: "string", entity: "string") -> "any":
     if "record_count" not in type_map["options"] or type_map["options"]["record_count"] != 1:
         raise Exception("one plugin can only be used on forms for which only one instance can exist.")
 
+    if name not in type_map["attributes"]:
+        raise Exception("%s is not defined in form %s" % (name, type_map["type"]))
+
     def put_call():
         return context.get_client().put_form(tid=env, id=type_map["type"], form=type_map)
     context.run_sync(put_call)
