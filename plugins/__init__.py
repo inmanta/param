@@ -59,7 +59,12 @@ def type_to_map(cls):
 @plugin
 def get(context: Context, name: "string", instance: "string"="") -> "any":
     """
-        Get a parameter from the server
+        Get a field in a record from the server.
+
+        :param name: The name of the field in the record (instance) to query.
+        :param instance: The record to get a parameter from.
+        :return:  The value of the record. Returns an unknown to sequence the orchestration process
+                  when the parameter is not available. 
     """
     env = Config.get("config", "environment", None)
 
@@ -92,10 +97,12 @@ def get(context: Context, name: "string", instance: "string"="") -> "any":
 @plugin
 def instances(context: Context, instance_type: "string", expecting: "number"=0) -> "list":
     """
-        Return a list of instances of the given type
+        Return a list of records (instances) of the given type (form). This plugin uploads the record
+        definition to the server. This makes the REST API available on the server and the form definition
+        in the dashboard.
 
-        :param instance_type The entity to base the form on
-        :param expecting The minimal number of parameters to expect
+        :param instance_type: The entity (type) of the record (form)
+        :param expecting: The minimal number of parameters to expect
     """
     env = Config.get("config", "environment", None)
     instance_type = context.get_type(instance_type)
@@ -127,7 +134,15 @@ def instances(context: Context, instance_type: "string", expecting: "number"=0) 
 @plugin
 def one(context: Context, name: "string", entity: "string") -> "any":
     """
-        Get a parameter from a form that can have only one instance.
+        Get a parameter from a form that can have only one instance. This combines the 
+        :py:func:`param.instances` and :py:func:`param.get` plugin in a single call. This plugin 
+        only works on forms that limit the number of records to 1 (see :inmanta:entity:`param::Form`)
+
+        Calling this plugin will upload the definition of the form to the server and make the REST API
+        and Form in available.
+
+        :param name: The name of the field in the record.
+        :param entity: The name of the entity type to get the record for.
     """
     env = Config.get("config", "environment", None)
     entity = context.get_type(entity)
@@ -180,7 +195,13 @@ def one(context: Context, name: "string", entity: "string") -> "any":
 @plugin
 def report(context: Context, name: "string", value: "string"):
     """
-        Set a param on the server
+        This plugin reports a parameter to the server from the compile process. This can be used for
+        `output` like parameter like in HEAT or TOSCA templates.
+
+        The dashboard will explicitly show these values as well.
+
+        :param name: The name/label of the value
+        :param value: The value to report.
     """
     env = Config.get("config", "environment", None)
 

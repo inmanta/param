@@ -1,5 +1,5 @@
 """
-    Copyright 2015 Impera
+    Copyright 2017 Inmanta
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,55 +13,43 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-    Contact: bart@impera.io
+    Contact: code@inmanta.com
 """
 
 entity Form:
     """
         A form definition should inherit this type to define a form
-
-        Fields defined in subclasses of this entity become fields in the form. This form can be
+ 
+        Attributes defined in subclasses of this entity become fields in the form. This form can be
         filled in through the REST API, cli or dashboard.
-
-        Each field has one of the basic types or a special typedef that adds constraints on the 
+ 
+        Each field has one of the basic types or a special typedef that adds constraints on the
         type. This can be used for validation but also for the dashboard to provide specific
         input widgets.
-
-        Fields that start with _ are reserved for special purposes. The following fields are
+ 
+        Attributes that start with _ are reserved for type options. The following attributes are
         currently supported:
-        _min_records: The minimal number of records required. If this number is higher than the
-                        actual number of records, unknowns are emitted.
-        _max_records: The maximal number of records that can be defined.
-        _record_count: The exact number of records that should exist. The main use case is a single
-                       singleton instance.
-        _title: The title of the form.
-        _help: A help text for the form
-
-        Fields that start with an existing field name and than __ are used to specify field
+        
+         * _min_records: The minimal number of records required. If this number is higher than the
+           actual number of records, unknowns are emitted.
+         * _max_records: The maximal number of records that can be defined.
+         * _record_count: The exact number of records that should exist. The main use case is a single
+           singleton instance. A form with this value set to 1 can be queried with the :py:func:`param.one`
+           plugin.
+         * _title: The title of the form.
+         * _help: A help text for the form
+ 
+        Attributes that start with an existing attributename and than __ are used to specify attribute
         specific options:
-
-        __widget: Specify a special widget for this field. textarea, options and slider are supported.
-        __options: A list of options that should be chosen from. The list is provided as a comma
-                   separated string.
-        __label: A label for the form field
-        __help: A help text for the form field
-        __min: Option for the slider widget
-        __max: Option for the slider widget
+ 
+         * __widget: Specify a special widget for this field. textarea, options and slider are supported.
+         * __options: A list of options that should be chosen from. The list is provided as a comma
+           separated string.
+         * __label: A label for the form field
+         * __help: A help text for the form field
+         * __min: Option for the slider widget
+         * __max: Option for the slider widget
     """
 end
-
-entity FormType:
-    """
-        Base type for modelling form fields
-    """
-end
-
-entity FormField:
-    string attribute
-end
-
-Form type [0:] -- [0:] FormField fields
-FormType field [0:] -- [0:] FormField forms
 
 typedef email as string matching /[^@]+@[^@]+\.[^@]+/
-
