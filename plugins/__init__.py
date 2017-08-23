@@ -35,7 +35,17 @@ def type_to_map(cls):
     defaults = cls.get_default_values()
     attribute_options = defaultdict(dict)
 
+    attributes = {}
     for name, attr in cls.attributes.items():
+        attributes[name] = attr
+
+    for parent in cls.get_all_parent_entities():
+        if not (parent.name == "Entity" and parent.namespace.get_full_name() == "std"):
+            for name, attr in parent.attributes.items():
+                if name not in attributes:
+                    attributes[name] = attr
+
+    for name, attr in attributes.items():
         obj = re.search("(.*)__(.*)", name)
         if name[0] == "_" and name in defaults and defaults[name] is not None:
             type_map["options"][name[1:]] = defaults[name].execute(None, None, None)
