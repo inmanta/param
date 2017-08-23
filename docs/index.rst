@@ -23,7 +23,7 @@ To define a form, just create an entity that extends :inmanta:entity:`param::For
 
 
 .. literalinclude:: examples/forms/libs/formtest/model/_init.cf
-   :language: ruby
+   :language: inmanta
 
 
 Special fields and conventions:
@@ -58,7 +58,7 @@ To access a form with only one record, use :py:func:`param::one<param.one>`. Not
 To access a form with multiple records, use :py:func:`param::instances<param.instances>` to get a list of instances. Then use :py:func:`param::get<param.get>` to get the fields of the instances.
 
 .. literalinclude:: examples/forms/main.cf
-   :language: ruby
+   :language: inmanta
 
 When you compile a model with a form, on first compile, the form definitions are sent to the server.
 All calls to :py:func:`param::one<param.one>` and :py:func:`param::instances<param.instances>` return 'Unknown' which means that parts of the model that use these values are dropped from the output.
