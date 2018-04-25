@@ -55,7 +55,7 @@ def type_to_map(cls):
             attribute_options[attr][opt] = defaults[name].execute(None, None, None)
 
         else:
-            type_map["attributes"][name] = {"type": attr.type.__str__()}
+            type_map["attributes"][name] = {"type": attr.type.type_string()}
             if name in defaults and defaults[name] is not None:
                 type_map["attributes"][name]["default"] = defaults[name].execute(None, None, None)
 
@@ -74,7 +74,7 @@ def get(context: Context, name: "string", instance: "string"="") -> "any":
         :param name: The name of the field in the record (instance) to query.
         :param instance: The record to get a parameter from.
         :return:  The value of the record. Returns an unknown to sequence the orchestration process
-                  when the parameter is not available. 
+                  when the parameter is not available.
     """
     env = Config.get("config", "environment", None)
 
@@ -144,8 +144,8 @@ def instances(context: Context, instance_type: "string", expecting: "number"=0) 
 @plugin
 def one(context: Context, name: "string", entity: "string") -> "any":
     """
-        Get a parameter from a form that can have only one instance. This combines the 
-        :py:func:`param.instances` and :py:func:`param.get` plugin in a single call. This plugin 
+        Get a parameter from a form that can have only one instance. This combines the
+        :py:func:`param.instances` and :py:func:`param.get` plugin in a single call. This plugin
         only works on forms that limit the number of records to 1 (see :inmanta:entity:`param::Form`)
 
         Calling this plugin will upload the definition of the form to the server and make the REST API
