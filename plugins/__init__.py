@@ -1,5 +1,5 @@
 """
-    Copyright 2017 Inmanta
+    Copyright 2018 Inmanta
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -62,6 +62,8 @@ def type_to_map(cls):
     for attr in attribute_options.keys():
         if attr in type_map["attributes"]:
             type_map["attributes"][attr]["options"] = attribute_options[attr]
+            if "modifier" not in type_map["attributes"][attr]["options"]:
+                type_map["attributes"][attr]["options"]["modifier"] = "rw"
 
     return type_map
 
@@ -107,12 +109,13 @@ def get(context: Context, name: "string", instance: "string"="") -> "any":
 @plugin
 def instances(context: Context, instance_type: "string", expecting: "number"=0) -> "list":
     """
-        Return a list of records (instances) of the given type (form). This plugin uploads the record
+        Return a list of record ids of the given type (form). This plugin uploads the record
         definition to the server. This makes the REST API available on the server and the form definition
         in the dashboard.
 
         :param instance_type: The entity (type) of the record (form)
         :param expecting: The minimal number of parameters to expect
+        :return: A list of ids of records. The id can be used with the get plugin.
     """
     env = Config.get("config", "environment", None)
     instance_type = context.get_type(instance_type)
@@ -136,6 +139,42 @@ def instances(context: Context, instance_type: "string", expecting: "number"=0) 
     return_list = []
     for record in result.result["records"]:
         return_list.append(record["id"])
+        RECORD_CACHE[record["id"]] = record["fields"]
+
+    return return_list
+
+
+@plugin
+def all(context: Context, instance_type: "string") -> "list":
+    """
+        Returns a list of records of the given type (form). This plugins uploads the record definition to the server. This
+        defined the REST API on the server and the form definition in the dashboard.
+
+        :param instance_type: The entity (type) of the record (form)
+        :return: A list of dict with all the defined records.
+    """
+    env = Config.get("config", "environment", None)
+    instance_type = context.get_type(instance_type)
+
+    if env is None:
+        raise Exception("The environment of this model should be configured in config>environment")
+
+    type_map = type_to_map(instance_type)
+    def put_call():
+        return context.get_client().put_form(tid=env, id=type_map["type"], form=type_map)
+    context.run_sync(put_call)
+
+    def list_call():
+        return context.get_client().list_records(tid=env, form_type=type_map["type"],
+                                                 include_record=True)
+    result = context.run_sync(list_call)
+
+    if result.code != 200:
+        raise Exception("Failed to retrieve instances: " + result.result["message"])
+
+    return_list = []
+    for record in result.result["records"]:
+        return_list.append(record["fields"])
         RECORD_CACHE[record["id"]] = record["fields"]
 
     return return_list
