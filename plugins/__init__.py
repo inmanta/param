@@ -16,18 +16,16 @@
     Contact: code@inmanta.com
 """
 
+import re
 import uuid
 from collections import defaultdict
-import re
 
-from inmanta import protocol
 from inmanta.config import Config
-from inmanta.plugins import plugin, Context, PluginMeta
 from inmanta.execute.util import Unknown
-from inmanta.export import Exporter, unknown_parameters
+from inmanta.export import unknown_parameters
+from inmanta.plugins import Context, plugin
 
-
-RECORD_CACHE= {}
+RECORD_CACHE = {}
 
 
 def type_to_map(cls):
@@ -57,7 +55,9 @@ def type_to_map(cls):
         else:
             type_map["attributes"][name] = {"type": attr.type.type_string()}
             if name in defaults and defaults[name] is not None:
-                type_map["attributes"][name]["default"] = defaults[name].execute(None, None, None)
+                type_map["attributes"][name]["default"] = defaults[name].execute(
+                    None, None, None
+                )
 
     for attr in attribute_options.keys():
         if attr in type_map["attributes"]:
@@ -69,7 +69,7 @@ def type_to_map(cls):
 
 
 @plugin
-def get(context: Context, name: "string", instance: "string"="") -> "any":
+def get(context: Context, name: "string", instance: "string" = "") -> "any":
     """
         Get a field in a record from the server.
 
@@ -81,10 +81,13 @@ def get(context: Context, name: "string", instance: "string"="") -> "any":
     env = Config.get("config", "environment", None)
 
     if env is None:
-        raise Exception("The environment of this model should be configured in config>environment")
+        raise Exception(
+            "The environment of this model should be configured in config>environment"
+        )
 
     if instance not in RECORD_CACHE:
         record_id = uuid.UUID(instance)
+
         def call():
             return context.get_client().get_record(tid=env, id=record_id)
 
@@ -93,21 +96,27 @@ def get(context: Context, name: "string", instance: "string"="") -> "any":
         if result.code == 200:
             RECORD_CACHE[instance] = result.result["record"]["fields"]
         else:
-            metadata={"type": "form", "record_id": instance}
-            unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
+            metadata = {"type": "form", "record_id": instance}
+            unknown_parameters.append(
+                {"parameter": name, "source": "form", "metadata": metadata}
+            )
             return Unknown(source=name)
 
     fields = RECORD_CACHE[instance]
     if name in fields:
         return fields[name]
     else:
-        metadata={"type": "form", "record_id": instance}
-        unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
+        metadata = {"type": "form", "record_id": instance}
+        unknown_parameters.append(
+            {"parameter": name, "source": "form", "metadata": metadata}
+        )
         return Unknown(source=name)
 
 
 @plugin
-def instances(context: Context, instance_type: "string", expecting: "number"=0) -> "list":
+def instances(
+    context: Context, instance_type: "string", expecting: "number" = 0
+) -> "list":
     """
         Return a list of record ids of the given type (form). This plugin uploads the record
         definition to the server. This makes the REST API available on the server and the form definition
@@ -121,16 +130,24 @@ def instances(context: Context, instance_type: "string", expecting: "number"=0) 
     instance_type = context.get_type(instance_type)
 
     if env is None:
-        raise Exception("The environment of this model should be configured in config>environment")
+        raise Exception(
+            "The environment of this model should be configured in config>environment"
+        )
 
     type_map = type_to_map(instance_type)
+
     def put_call():
-        return context.get_client().put_form(tid=env, id=type_map["type"], form=type_map)
+        return context.get_client().put_form(
+            tid=env, id=type_map["type"], form=type_map
+        )
+
     context.run_sync(put_call)
 
     def list_call():
-        return context.get_client().list_records(tid=env, form_type=type_map["type"],
-                                                 include_record=True)
+        return context.get_client().list_records(
+            tid=env, form_type=type_map["type"], include_record=True
+        )
+
     result = context.run_sync(list_call)
 
     if result.code != 200:
@@ -157,16 +174,24 @@ def all(context: Context, instance_type: "string") -> "list":
     instance_type = context.get_type(instance_type)
 
     if env is None:
-        raise Exception("The environment of this model should be configured in config>environment")
+        raise Exception(
+            "The environment of this model should be configured in config>environment"
+        )
 
     type_map = type_to_map(instance_type)
+
     def put_call():
-        return context.get_client().put_form(tid=env, id=type_map["type"], form=type_map)
+        return context.get_client().put_form(
+            tid=env, id=type_map["type"], form=type_map
+        )
+
     context.run_sync(put_call)
 
     def list_call():
-        return context.get_client().list_records(tid=env, form_type=type_map["type"],
-                                                 include_record=True)
+        return context.get_client().list_records(
+            tid=env, form_type=type_map["type"], include_record=True
+        )
+
     result = context.run_sync(list_call)
 
     if result.code != 200:
@@ -197,22 +222,33 @@ def one(context: Context, name: "string", entity: "string") -> "any":
     entity = context.get_type(entity)
 
     if env is None:
-        raise Exception("The environment of this model should be configured in config>environment")
+        raise Exception(
+            "The environment of this model should be configured in config>environment"
+        )
 
     type_map = type_to_map(entity)
 
-    if "record_count" not in type_map["options"] or type_map["options"]["record_count"] != 1:
-        raise Exception("one plugin can only be used on forms for which only one instance can exist.")
+    if (
+        "record_count" not in type_map["options"]
+        or type_map["options"]["record_count"] != 1
+    ):
+        raise Exception(
+            "one plugin can only be used on forms for which only one instance can exist."
+        )
 
     if name not in type_map["attributes"]:
         raise Exception("%s is not defined in form %s" % (name, type_map["type"]))
 
     def put_call():
-        return context.get_client().put_form(tid=env, id=type_map["type"], form=type_map)
+        return context.get_client().put_form(
+            tid=env, id=type_map["type"], form=type_map
+        )
+
     context.run_sync(put_call)
 
     def list_call():
         return context.get_client().list_records(tid=env, form_type=type_map["type"])
+
     result = context.run_sync(list_call)
 
     if result.code != 200:
@@ -224,23 +260,33 @@ def one(context: Context, name: "string", entity: "string") -> "any":
 
         else:
             metadata = {"type": "form", "form": type_map["type"]}
-            unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
+            unknown_parameters.append(
+                {"parameter": name, "source": "form", "metadata": metadata}
+            )
             return Unknown(source=name)
 
     elif len(result.result["records"]) > 1:
-        raise Exception("Only one record for form %s may exist, %d were returned." %
-                        (type_map["type"], len(result.result["records"])))
+        raise Exception(
+            "Only one record for form %s may exist, %d were returned."
+            % (type_map["type"], len(result.result["records"]))
+        )
 
     else:
+
         def get_call():
-            return context.get_client().get_record(tid=env, id=result.result["records"][0]["id"])
+            return context.get_client().get_record(
+                tid=env, id=result.result["records"][0]["id"]
+            )
+
         result = context.run_sync(get_call)
 
         if name in result.result["record"]["fields"]:
             return result.result["record"]["fields"][name]
 
         metadata = {"type": "form", "record_id": result.result["record"]["id"]}
-        unknown_parameters.append({"parameter": name, "source": "form", "metadata": metadata})
+        unknown_parameters.append(
+            {"parameter": name, "source": "form", "metadata": metadata}
+        )
         return Unknown(source=name)
 
 
@@ -261,9 +307,13 @@ def report(context: Context, name: "string", value: "string"):
         return
 
     if env is None:
-        raise Exception("The environment of this model should be configured in config>environment")
+        raise Exception(
+            "The environment of this model should be configured in config>environment"
+        )
 
     def report_call():
-        return context.get_client().set_param(tid=env, id=name, value=value, source="report",
-                                      metadata={"type": "report"})
+        return context.get_client().set_param(
+            tid=env, id=name, value=value, source="report", metadata={"type": "report"}
+        )
+
     return context.run_sync(report_call)
