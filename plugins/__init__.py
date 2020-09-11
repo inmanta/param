@@ -68,13 +68,13 @@ def type_to_map(cls):
 @plugin
 def report(context: Context, name: "string", value: "string"):
     """
-        This plugin reports a parameter to the server from the compile process. This can be used for
-        `output` like parameter like in HEAT or TOSCA templates.
+    This plugin reports a parameter to the server from the compile process. This can be used for
+    `output` like parameter like in HEAT or TOSCA templates.
 
-        The dashboard will explicitly show these values as well.
+    The dashboard will explicitly show these values as well.
 
-        :param name: The name/label of the value
-        :param value: The value to report.
+    :param name: The name/label of the value
+    :param value: The value to report.
     """
     env = Config.get("config", "environment", None)
 
